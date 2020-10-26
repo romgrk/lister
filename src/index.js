@@ -22,15 +22,14 @@ const linesToItems = lines => lines.map(f => ({ text: f }))
 // Start the GLib event loop
 gi.startLoop()
 
-console.log('before')
 const app = new Application()
 app.run()
-console.log('after')
 
 async function main() {
   const server = net.createServer((socket) => {
     let meta = undefined
     let data = ''
+    let didEnd = false
 
     socket.on('data', buffer => {
       const text = buffer.toString()
@@ -55,19 +54,25 @@ async function main() {
     })
 
     socket.on('end', data => {
-      console.log('socket end')
+      console.log('socket: end')
+    })
+
+    socket.on('close', data => {
+      console.log('socket: close')
+      /* if (app.window.isActive())
+       *   app.window.close() */
     })
 
     function run() {
       const items = linesToItems(JSON.parse(data))
       const item = app.window.run(items, meta)
       const response = { ok: Boolean(item), item: item || null }
-      socket.write(JSON.stringify(response))
+      if (!socket.destroyed)
+        socket.write(JSON.stringify(response))
     }
   })
 
   server.listen(8556, '127.0.0.1')
-  console.log('after server listern')
 }
 
 async function mainDirect() {
