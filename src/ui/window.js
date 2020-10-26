@@ -69,6 +69,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
     this.on('hide', Gtk.mainQuit)
     this.on('delete-event', this.onDelete)
     this.on('focus-out-event', this.onFocusOut)
+    this.on('focus-in-event', this.onFocusIn)
     // this.on('destroy', this.onDestroy)
     this.input.on('key-press-event', this.onKeyPressEvent)
     this.input.on('search-changed', this.update)
@@ -137,7 +138,12 @@ class ListerWindow extends Gtk.ApplicationWindow {
   }
 
   onFocusOut = () => {
-    this.close()
+    this.focusOutTimeout = setTimeout(() => this.close(), 500)
+  }
+
+  onFocusIn = () => {
+    if (this.focusOutTimeout)
+      clearTimeout(this.focusOutTimeout)
   }
 
   onKeyPressEvent = (event) => {
