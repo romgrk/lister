@@ -1,6 +1,8 @@
 
 # lister (experimental, not usable yet)
 
+To be notified when it's ready, set your watch status to Releases Only.
+
 ![lister](./static/lister.gif)
 
 This is a fuzzy picker interface that can be opened from any other 
