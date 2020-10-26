@@ -22,21 +22,21 @@ const linesToItems = lines => lines.map(f => ({ text: f }))
 // Start the GLib event loop
 gi.startLoop()
 
+
 const app = new Application()
-app.run()
+// app.run()
 
 async function main() {
+
   const server = net.createServer((socket) => {
     let meta = undefined
     let data = ''
-    let didEnd = false
 
     socket.on('data', buffer => {
       const text = buffer.toString()
 
       if (meta === undefined) {
         const index = text.indexOf('\n')
-        console.log('parsing: ', text.slice(0, index))
         meta = JSON.parse(text.slice(0, index))
         data += text.slice(index + 1)
         console.log('parsed: ', meta)
@@ -44,8 +44,6 @@ async function main() {
       else {
         data += text
       }
-
-      console.log(`data: got ${data.length} on ${meta.length}`)
 
       if (data.length >= meta.length) {
         console.log('running', data.length)
@@ -59,8 +57,6 @@ async function main() {
 
     socket.on('close', data => {
       console.log('socket: close')
-      /* if (app.window.isActive())
-       *   app.window.close() */
     })
 
     function run() {
@@ -73,6 +69,7 @@ async function main() {
   })
 
   server.listen(8556, '127.0.0.1')
+  console.log('Listening...')
 }
 
 async function mainDirect() {
