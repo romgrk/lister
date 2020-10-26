@@ -2,17 +2,29 @@
  * search-implementation.js
  */
 
-const fzy = require('./fzy')
+let fzy
+try {
+  fzy = require('node-fzy')
+} catch (err) {
+  fzy = require('./fzy')
+}
 
 module.exports = search
 
 function search(query, items) {
-  const results = items.reduce((acc, i) => {
-    const [score, positions]= fzy.scoreAndPositions(query, i.text)
-    if (score > -100)
-      acc.push({ item: i, score, positions })
-    return acc
-  }, [])
+  const results = []
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    const haystack = item.text
+
+    if (fzy.hasMatch(query, haystack)) {
+      const [score, positions]= fzy.matchPositions(query, haystack)
+      results.push({ item, score, positions })
+    }
+  }
+
   results.sort((a, b) => b.score - a.score)
+
   return results
 }

@@ -92,20 +92,20 @@ function compute(needle, haystack, D, M) {
   }
 }
 
-function score(needle, haystack) {
+function match(needle, haystack) {
   var n = needle.length;
   var m = haystack.length;
 
   if (!n || !m)
     return SCORE_MIN;
 
-  if (n === m) {
-    /* Since this method can only be called with a haystack which
-     * matches needle. If the lengths of the strings are equal the
-     * strings themselves must also be equal (ignoring case).
-     */
-    return SCORE_MAX;
-  }
+  // if (n === m) {
+  //   /* Since this method can only be called with a haystack which
+  //    * matches needle. If the lengths of the strings are equal the
+  //    * strings themselves must also be equal (ignoring case).
+  //    */
+  //   return SCORE_MAX;
+  // }
 
   if (m > 1024) {
     /*
@@ -133,11 +133,11 @@ function positions(needle, haystack) {
   if (!n || !m)
     return positions;
 
-  if (n === m) {
-    for (var i = 0; i < n; i++)
-      positions[i] = i;
-    return positions;
-  }
+  // if (n === m) {
+  //   for (var i = 0; i < n; i++)
+  //     positions[i] = i;
+  //   return positions;
+  // } 
 
   if (m > 1024) {
     return positions;
@@ -179,7 +179,7 @@ function positions(needle, haystack) {
   return positions;
 }
 
-function scoreAndPositions(needle, haystack) {
+function matchPositions(needle, haystack) {
   const n = needle.length;
   const m = haystack.length;
 
@@ -264,8 +264,8 @@ module.exports = {
   SCORE_MATCH_DOT,
 
   /* functions */
-  score,
+  match,
   positions,
-  scoreAndPositions,
-  hasMatch
+  hasMatch,
+  matchPositions,
 }
