@@ -68,6 +68,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
     this.on('show', this.onShow)
     this.on('hide', Gtk.mainQuit)
     this.on('delete-event', this.onDelete)
+    this.on('focus-out-event', this.onFocusOut)
     // this.on('destroy', this.onDestroy)
     this.input.on('key-press-event', this.onKeyPressEvent)
     this.input.on('search-changed', this.update)
@@ -116,13 +117,6 @@ class ListerWindow extends Gtk.ApplicationWindow {
     this.hide()
   }
 
-  onKeyPressEvent = (event) => {
-    if (event.keyval === Gdk.KEY_Escape)
-      this.close()
-    else if (event.keyval === Gdk.KEY_Return)
-      this.accept()
-  }
-
   onShow = () => {
     this.present()
     this.grabFocus()
@@ -131,14 +125,26 @@ class ListerWindow extends Gtk.ApplicationWindow {
       activateWindow(ID).catch(console.error)
     , 50)
 
-    // This start the Gtk event loop. It is required to process user events.
-    // It doesn't return until you don't need Gtk anymore, usually on window close.
+    // This start the Gtk event loop.
+    // It is required to process user events.
+    // It doesn't return until the window closes.
     Gtk.main()
   }
 
   onDelete = () => {
     this.hide()
     return true
+  }
+
+  onFocusOut = () => {
+    this.close()
+  }
+
+  onKeyPressEvent = (event) => {
+    if (event.keyval === Gdk.KEY_Escape)
+      this.close()
+    else if (event.keyval === Gdk.KEY_Return)
+      this.accept()
   }
 
   setTheme(colors) {
