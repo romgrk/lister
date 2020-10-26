@@ -115,7 +115,10 @@ function! s:shadow_open()
    \ }
    let s:shadow_winid = nvim_open_win(s:empty_bufnr, v:false, opts)
    call setwinvar(s:shadow_winid, '&winhighlight', 'Normal:BufferShadow,NormalNC:BufferShadow,EndOfBuffer:BufferShadow')
-   call setwinvar(s:shadow_winid, '&winblend', 80)
+   call setwinvar(s:shadow_winid, '&winblend', 100)
+   call timer_start(50, {->
+    \ setwinvar(s:shadow_winid, '&winblend',
+    \   getwinvar(s:shadow_winid, '&winblend') - 5)}, { 'repeat': 10 })
 endfunc
 function! s:shadow_close()
    if s:shadow_winid != v:null && nvim_win_is_valid(s:shadow_winid)
