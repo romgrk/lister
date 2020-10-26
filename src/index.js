@@ -10,7 +10,7 @@ const Gdk     = gi.require('Gdk', '3.0')
 const WebKit2 = gi.require('WebKit2')
 
 const { delay } = require('./promise')
-const ListerWindow = require('./ui/window')
+const Application = require('./ui/application')
 
 const linesToItems = lines => lines.map(f => ({ text: f }))
 
@@ -22,7 +22,10 @@ const linesToItems = lines => lines.map(f => ({ text: f }))
 // Start the GLib event loop
 gi.startLoop()
 
-const window = new ListerWindow()
+console.log('before')
+const app = new Application()
+app.run()
+console.log('after')
 
 async function main() {
   const server = net.createServer((socket) => {
@@ -57,13 +60,14 @@ async function main() {
 
     function run() {
       const items = linesToItems(JSON.parse(data))
-      const item = window.run(items, meta)
+      const item = app.window.run(items, meta)
       const response = { ok: Boolean(item), item: item || null }
       socket.write(JSON.stringify(response))
     }
   })
 
   server.listen(8556, '127.0.0.1')
+  console.log('after server listern')
 }
 
 async function mainDirect() {

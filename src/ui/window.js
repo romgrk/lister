@@ -4,6 +4,9 @@
 
 const gi = require('node-gtk')
 const isEqual = require('lodash.isequal')
+const activateWindow = require('../helpers/activate-window')
+
+require('./init')
 
 const Gtk     = gi.require('Gtk', '3.0')
 const Gdk     = gi.require('Gdk', '3.0')
@@ -20,11 +23,6 @@ const GtkStyleProviderPriority = {
 const search = require('../search')
 const ItemList = require('./item-list')
 
-// Necessary to initialize the graphic environment.
-// If this fails it means the host cannot show Gtk-3.0
-Gtk.init()
-Gdk.init([])
-
 const display = Gdk.Display.getDefault()
 const screen = display.getDefaultScreen()
 
@@ -32,14 +30,23 @@ const screen = display.getDefaultScreen()
 const width  = 800
 const height = 400
 
-class ListerWindow extends Gtk.Window {
+const ID = '__lister__'
 
-  constructor() {
-    super({ type : Gtk.WindowType.TOPLEVEL })
+class ListerWindow extends Gtk.ApplicationWindow {
+
+  constructor(application) {
+    super({
+      application,
+      title: ID,
+      type: Gtk.WindowType.TOPLEVEL,
+    })
+
+    /* State */
     this.items = []
     this.matches = []
     this.result = null
 
+    /* Elements */
     this.container = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL })
     this.input = new Gtk.SearchEntry()
     this.scrollWindow = new Gtk.ScrolledWindow()
@@ -49,7 +56,7 @@ class ListerWindow extends Gtk.Window {
     this.container.packStart(this.input,        false, true, 0)
     this.container.packStart(this.scrollWindow, true,  true, 0)
 
-    this.setTitle('__lister__')
+    this.setWmclass(ID, ID)
     this.setDefaultSize(width, height)
     // this.setDeletable(false)
     this.setDecorated(false)
@@ -119,6 +126,11 @@ class ListerWindow extends Gtk.Window {
   onShow = () => {
     this.present()
     this.grabFocus()
+
+    setTimeout(() =>
+      activateWindow(ID).catch(console.error)
+    , 50)
+
     // This start the Gtk event loop. It is required to process user events.
     // It doesn't return until you don't need Gtk anymore, usually on window close.
     Gtk.main()

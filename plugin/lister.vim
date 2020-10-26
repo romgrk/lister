@@ -9,18 +9,14 @@ let s:job = v:null
 let s:shadow_winid = v:null
 let s:empty_bufnr = nvim_create_buf(0, 1)
 
-let s:start_server = v:true
+let s:start_server = v:false
 
-let g:lister = extend({
-\ 'server_id': v:null
-\}, get(g:, 'lister', {}))
+let g:lister = get(g:, 'lister', {})
 
 function! s:setup()
+  call s:server_stop()
   if !s:start_server
     return
-  end
-  if has_key(g:lister, 'server')
-    call s:server_stop()
   end
   call s:server_start()
 endfunc
@@ -35,9 +31,6 @@ function! s:lister()
   echom cmd
   let s:job = s:run(cmd, getcwd(), function('s:lister_sink'))
   call s:shadow_open()
-  call timer_start(100,
-      \ {-> system("bash -c 'xdotool windowfocus $(xdotool search --name __lister__)'")},
-      \ { 'repeat': 1 })
 endfunc
 function! s:lister_sink(opts) dict
   call s:shadow_close()
@@ -72,10 +65,13 @@ function! s:server_start()
 endfunc
 function! s:server_stop()
   echom 'server stopping'
-  call job_stop(g:lister.server.id)
+  if has_key(g:lister, 'server')
+    call job_stop(g:lister.server.id)
+    call remove(g:lister, 'server')
+  end
 endfunc
 function! s:server_stopped(job)
-  echom 'server stopped'
+  echom 'server stopped unexpectedly'
   call remove(g:lister, 'server')
 endfunc
 
@@ -102,7 +98,9 @@ endfunction
 function! s:on_exit(...) dict
   let self.stdout = filter(self.stdout, "v:val != ''")
   let self.stderr = filter(self.stderr, "v:val != ''")
-  call self.handler(self)
+  if has_key(self, 'handler')
+    call self.handler(self)
+  end
 endfunction
 
 " open/close shadow window
