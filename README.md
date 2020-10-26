@@ -14,9 +14,9 @@ The current implementation relies on a lot of things. Cross-platformly
 opening a window over the active window is not an easy thing to do,
 but I will remove dependencies as I find solutions.
 
- - Linux & X11
  - nodejs
- - xdotool
+ - Linux
+ - ~~X11 && xdotool~~ Gnome (either X11 or Wayland)
  - xwininfo
  - xprop
  - fd
