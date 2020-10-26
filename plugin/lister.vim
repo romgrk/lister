@@ -9,7 +9,7 @@ let s:job = v:null
 let s:shadow_winid = v:null
 let s:empty_bufnr = nvim_create_buf(0, 1)
 
-let s:start_server = v:false
+let s:start_server = v:true
 
 let g:lister = get(g:, 'lister', {})
 
@@ -66,7 +66,7 @@ endfunc
 function! s:server_stop()
   echom 'server stopping'
   if has_key(g:lister, 'server')
-    call job_stop(g:lister.server.id)
+    call jobstop(g:lister.server.id)
     call remove(g:lister, 'server')
   end
 endfunc
