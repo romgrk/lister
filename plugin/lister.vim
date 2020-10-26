@@ -2,8 +2,11 @@
 
 nnoremap <C-b> :call <SID>lister()<CR>
 
+let s:dirname = expand('<sfile>:p:h:h')
+let s:executable = s:dirname . "/bin/lister"
+
 function! s:lister()
-  let cmd = "node src/client.js --input data/files.json"
+  let cmd =  s:executable . " --input data/files.json"
   call s:run(cmd, getcwd(), function('s:lister_sink'))
 endfunc
 

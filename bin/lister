@@ -1,5 +1,8 @@
+#!/usr/bin/env node
 /*
- * client.js
+ * lister
+ *
+ * This is the implementation for the client of lister.
  */
 
 const { execSync } = require('child_process')
@@ -54,3 +57,5 @@ function findProp(name, lines) {
 function findInt(line) {
   return parseInt(line.match(/\d+/)[0], 10)
 }
+
+// vim: ft=javascript

@@ -18,7 +18,7 @@ node src/index.js
 Then, the client can send requests.
 
 ```bash
-node src/client.js
+~/path/to/filer/bin/lister
 ```
 
 For now, this is all highly experimental. The client sends queries
