@@ -14,8 +14,6 @@ const ListerWindow = require('./ui/window')
 
 const linesToItems = lines => lines.map(f => ({ text: f }))
 
-// const files = linesToItems(require('../data/files.json'))
-
 
 /*
  * Main
@@ -69,9 +67,9 @@ async function main() {
 }
 
 async function mainDirect() {
-  gi.startLoop()
-
   let shouldExit = true
+
+  const files = linesToItems(require('../data/files.json'))
 
   do {
     const window = new ListerWindow(files)

@@ -49,6 +49,7 @@ class ListerWindow extends Gtk.Window {
     this.container.packStart(this.input,        false, true, 0)
     this.container.packStart(this.scrollWindow, true,  true, 0)
 
+    this.setTitle('__lister__')
     this.setDefaultSize(width, height)
     // this.setDeletable(false)
     this.setDecorated(false)

@@ -9,6 +9,22 @@ let s:job = v:null
 let s:shadow_winid = v:null
 let s:empty_bufnr = nvim_create_buf(0, 1)
 
+let s:start_server = v:true
+
+let g:lister = extend({
+\ 'server_id': v:null
+\}, get(g:, 'lister', {}))
+
+function! s:setup()
+  if !s:start_server
+    return
+  end
+  if has_key(g:lister, 'server')
+    call s:server_stop()
+  end
+  call s:server_start()
+endfunc
+
 function! s:lister()
   let hl = nvim_get_hl_by_name('Normal', 1)
   let fg = '#' . printf("%x", hl.foreground)
@@ -19,8 +35,10 @@ function! s:lister()
   echom cmd
   let s:job = s:run(cmd, getcwd(), function('s:lister_sink'))
   call s:shadow_open()
+  call timer_start(100,
+      \ {-> system("bash -c 'xdotool windowfocus $(xdotool search --name __lister__)'")},
+      \ { 'repeat': 1 })
 endfunc
-
 function! s:lister_sink(opts) dict
   call s:shadow_close()
   let stderr = join(a:opts.stderr, '')
@@ -45,6 +63,21 @@ function! s:lister_sink(opts) dict
   endtry
 endfunc
 
+function! s:server_start()
+  let g:lister.server = s:run(
+        \ "node src/index.js",
+        \ s:dirname,
+        \ function('s:server_stopped'))
+  echom 'server started'
+endfunc
+function! s:server_stop()
+  echom 'server stopping'
+  call job_stop(g:lister.server.id)
+endfunc
+function! s:server_stopped(job)
+  echom 'server stopped'
+  call remove(g:lister, 'server')
+endfunc
 
 " runs a command then calls Fn handler
 function! s:run(cmd, cwd, Fn)
@@ -57,13 +90,13 @@ function! s:run(cmd, cwd, Fn)
   let opts.on_stderr = function('s:on_stderr')
   let opts.on_exit = function('s:on_exit')
   let opts.handler = a:Fn
-  let opts.jobID = jobstart(a:cmd, opts)
+  let opts.id = jobstart(a:cmd, opts)
   return opts
 endfunction
-function! s:on_stdout(jobID, data, event) dict
+function! s:on_stdout(id, data, event) dict
   call extend(self.stdout, a:data)
 endfunction
-function! s:on_stderr(jobID, data, event) dict
+function! s:on_stderr(id, data, event) dict
   call extend(self.stderr, a:data)
 endfunction
 function! s:on_exit(...) dict
@@ -93,3 +126,4 @@ function! s:shadow_close()
    let s:shadow_winid = v:null
 endfunc
 
+call s:setup()

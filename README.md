@@ -8,7 +8,20 @@ To be notified when it's ready, set your watch status to Releases Only.
 This is a fuzzy picker interface that can be opened from any other 
 application.
 
-#### How
+### Requirements
+
+The current implementation relies on a lot of things. Cross-platformly
+opening a window over the active window is not an easy thing to do,
+but I will remove dependencies as I find solutions.
+
+ - Linux & X11
+ - nodejs
+ - xdotool
+ - xwininfo
+ - xprop
+ - fd
+
+### How
 
 The server always runs in the background. This allows to reduce the
 startup delay.
@@ -26,3 +39,9 @@ Then, the client can send requests.
 For now, this is all highly experimental. The client sends queries
 by running `fd -t f` in the current directory to the server and that's
 it.
+
+### Neovim
+
+```vim
+Plug 'romgrk/lister', { 'do': 'npm install' }
+```
