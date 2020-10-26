@@ -61,17 +61,28 @@ function! s:server_start()
         \ "node src/index.js",
         \ s:dirname,
         \ function('s:server_stopped'))
-  echom 'server started'
+  silent echom 'lister: server started'
 endfunc
 function! s:server_stop()
-  echom 'server stopping'
   if has_key(g:lister, 'server')
-    call jobstop(g:lister.server.id)
+    echom 'lister: server stopping'
+    let job = g:lister.server
+    let id = job.id
+    let job.handler = v:null
     call remove(g:lister, 'server')
+    call jobstop(id)
   end
 endfunc
 function! s:server_stopped(job)
-  echom 'server stopped unexpectedly'
+  if !a:job.stopped
+    let stderr = join(a:job.stderr, '')
+    let stdout = join(a:job.stdout, '')
+    echohl ErrorMsg
+    echom "lister: server stopped:\n"
+    echom stdout
+    echom stderr
+    echohl None
+  end
   call remove(g:lister, 'server')
 endfunc
 
@@ -86,6 +97,7 @@ function! s:run(cmd, cwd, Fn)
   let opts.on_stderr = function('s:on_stderr')
   let opts.on_exit = function('s:on_exit')
   let opts.handler = a:Fn
+  let opts.stopped = v:false
   let opts.id = jobstart(a:cmd, opts)
   return opts
 endfunction
@@ -98,7 +110,7 @@ endfunction
 function! s:on_exit(...) dict
   let self.stdout = filter(self.stdout, "v:val != ''")
   let self.stderr = filter(self.stderr, "v:val != ''")
-  if has_key(self, 'handler')
+  if has_key(self, 'handler') && type(self.handler) == v:t_func
     call self.handler(self)
   end
 endfunction
