@@ -3,9 +3,19 @@
  */
 
 const gi = require('node-gtk')
+const isEqual = require('lodash.isequal')
 
 const Gtk     = gi.require('Gtk', '3.0')
 const Gdk     = gi.require('Gdk', '3.0')
+gi.require('GdkX11', '3.0')
+
+const GtkStyleProviderPriority = {
+  FALLBACK:    1,
+  THEME:       200,
+  SETTINGS:    400,
+  APPLICATION: 600,
+  USER:        800,
+}
 
 const search = require('../search')
 const ItemList = require('./item-list')
@@ -15,11 +25,18 @@ const ItemList = require('./item-list')
 Gtk.init()
 Gdk.init([])
 
+const display = Gdk.Display.getDefault()
+const screen = display.getDefaultScreen()
+
+
+const width  = 800
+const height = 400
+
 class ListerWindow extends Gtk.Window {
 
-  constructor(items, parent) {
+  constructor() {
     super({ type : Gtk.WindowType.TOPLEVEL })
-    this.items = items
+    this.items = []
     this.matches = []
     this.result = null
 
@@ -32,27 +49,36 @@ class ListerWindow extends Gtk.Window {
     this.container.packStart(this.input,        false, true, 0)
     this.container.packStart(this.scrollWindow, true,  true, 0)
 
-    const width = 800
-    const height = 400
-
-    this.setPosition(Gtk.WindowPosition.CENTER_ON_PARENT)
     this.setDefaultSize(width, height)
     // this.setDeletable(false)
     this.setDecorated(false)
     this.setResizable(true)
     this.setKeepAbove(true)
-    this.move(
-      parent.x + (parent.width  - width)  / 2,
-      parent.y + (parent.height - height) / 2,
-    )
     this.add(this.container)
-    this.update()
 
     /* Event handlers */
     this.on('show', this.onShow)
-    this.on('destroy', Gtk.mainQuit)
+    this.on('hide', Gtk.mainQuit)
+    this.on('delete-event', this.onDelete)
+    // this.on('destroy', this.onDestroy)
     this.input.on('key-press-event', this.onKeyPressEvent)
     this.input.on('search-changed', this.update)
+  }
+
+  run = (items, meta) => {
+    const { dimensions, colors } = meta
+    this.input.setText('')
+    this.items = items
+    this.matches = []
+    this.result = null
+    this.setTheme(colors)
+    this.move(
+      dimensions.x + (dimensions.width  - width)  / 2,
+      dimensions.y + (dimensions.height - height) / 2,
+    )
+    this.update()
+    this.showAll()
+    return this.result
   }
 
   update = () => {
@@ -77,20 +103,15 @@ class ListerWindow extends Gtk.Window {
     })
   }
 
-  run = () => {
-    this.showAll()
-    return this.result
-  }
-
   accept = () => {
     this.result = this.itemList?.getSelectedItem()
-    this.close()
+    this.hide()
   }
 
   onKeyPressEvent = (event) => {
     if (event.keyval === Gdk.KEY_Escape)
       this.close()
-    if (event.keyval === Gdk.KEY_Return)
+    else if (event.keyval === Gdk.KEY_Return)
       this.accept()
   }
 
@@ -102,6 +123,34 @@ class ListerWindow extends Gtk.Window {
     Gtk.main()
   }
 
+  onDelete = () => {
+    this.hide()
+    return true
+  }
+
+  setTheme(colors) {
+    if (!colors || !colors.fg || !colors.bg) {
+      return
+    }
+    if (this.colors && !isEqual(colors, this.colors)) {
+      Gtk.StyleContext.removeProviderForScreen(screen, this.provider)
+    }
+    this.provider = new Gtk.CssProvider()
+    this.provider.loadFromData(`
+      @define-color fg_color ${colors.fg};
+      @define-color bg_color ${colors.bg};
+
+      window, entry.search, viewport, list, row {
+        background-color: @bg_color;
+      }
+    `)
+    Gtk.StyleContext.addProviderForScreen(
+      screen,
+      this.provider,
+      GtkStyleProviderPriority.APPLICATION
+    )
+    this.colors = colors
+  }
 }
 
 module.exports = ListerWindow

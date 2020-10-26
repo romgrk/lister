@@ -24,6 +24,8 @@ const linesToItems = lines => lines.map(f => ({ text: f }))
 // Start the GLib event loop
 gi.startLoop()
 
+const window = new ListerWindow()
+
 async function main() {
   const server = net.createServer((socket) => {
     let meta = undefined
@@ -57,8 +59,7 @@ async function main() {
 
     function run() {
       const items = linesToItems(JSON.parse(data))
-      const window = new ListerWindow(items, meta.dimensions)
-      const item = window.run()
+      const item = window.run(items, meta)
       const response = { ok: Boolean(item), item: item || null }
       socket.write(JSON.stringify(response))
     }

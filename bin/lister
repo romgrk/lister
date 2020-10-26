@@ -13,6 +13,8 @@ const { program } = require('commander')
 program
   .option('-p, --position   <spec>', 'position')
   .option('-i, --input      <file>', 'input file')
+  .option('    --fg         <fg>', 'foreground color')
+  .option('    --bg         <bg>', 'background color')
  
 program.parse(process.argv)
 
@@ -25,7 +27,15 @@ client.connect(8556, '127.0.0.1', () => {
 
   // const buffer = fs.readFileSync(program.input)
   const buffer = JSON.stringify(execSync('fd -t f').toString().split('\n'))
-  client.write(`${JSON.stringify({ length: buffer.length, dimensions })}\n`)
+  const meta = {
+    length: buffer.length,
+    dimensions,
+    colors: {
+      fg: program.fg,
+      bg: program.bg,
+    },
+  }
+  client.write(`${JSON.stringify(meta)}\n`)
   client.write(buffer)
 })
 
