@@ -2,6 +2,9 @@
  * window.js
  */
 
+const cp = require('child_process')
+const util = require('util')
+const exec = util.promisify(cp.exec)
 const gi = require('node-gtk')
 const isEqual = require('lodash.isequal')
 const activateWindow = require('../helpers/activate-window')
@@ -20,7 +23,7 @@ const GtkStyleProviderPriority = {
   USER:        800,
 }
 
-const search = require('../search')
+const { search, asMatches, asItems } = require('../search')
 const ItemList = require('./item-list')
 
 const display = Gdk.Display.getDefault()
@@ -74,10 +77,10 @@ class ListerWindow extends Gtk.ApplicationWindow {
     this.input.on('search-changed', this.update)
   }
 
-  run = (items, meta) => {
+  run = (meta) => {
     const { dimensions, colors } = meta
     this.input.setText('')
-    this.items = items
+    this.items = []
     this.matches = []
     this.result = null
     this.setTheme(colors)
@@ -85,36 +88,90 @@ class ListerWindow extends Gtk.ApplicationWindow {
       dimensions.x + (dimensions.width  - width)  / 2,
       dimensions.y + (dimensions.height - height) / 2,
     )
-    this.update()
+
+    console.log('window:exec')
+    console.time('exec')
+    exec('fd -t f', { cwd: meta.cwd }).then(res => {
+      console.log('window:exec:done')
+      console.timeEnd('exec')
+      const items = res.stdout.split('\n').map(f => ({ text: f }))
+      console.log('window:items', [items.length])
+      this.addItems(items)
+    })
+
+    console.log('window:show-all')
     this.showAll()
     return this.result
   }
 
+  addItems = (items) => {
+    this.items = this.items.concat(items)
+    this.update()
+  }
+
   update = () => {
     const query = this.input.getText()
-    // console.time('search')
-    search(query, this.items)
-    .then(matches => {
-      this.matches = matches
-      // console.timeEnd('search')
-      this.itemList = new ItemList(this.matches)
-      // console.log(query, matches.length)
 
-      // console.time('update')
-      const children = this.scrollWindow.getChildren()
-      children.forEach(c => this.scrollWindow.remove(c))
-      this.scrollWindow.add(this.itemList)
-      this.scrollWindow.showAll()
-      // console.timeEnd('update')
+    if (query === '') {
+      this.matches = asMatches(this.items)
+      this.renderList()
+      return
+    }
+
+    let items = this.items
+
+    if (query.startsWith(this.lastQuery) && this.matchesFor === this.lastQuery) {
+      items = asItems(this.matches)
+    }
+
+    console.log('searching on ', [items.length])
+    this.lastQuery = query
+
+    console.time('search')
+    search(query, items).then(matches => {
+      console.log([query, matches.length])
+      console.timeEnd('search')
+
+      this.matches = matches
+      this.matchesFor = query
+
+      this.renderList()
     })
     .catch(err => {
       console.error(err)
     })
   }
 
+  renderList = () => {
+    this.clearList()
+
+    // TODO: we are lying here, we're not showing all
+    // items. On large lists, generating that much elements
+    // is expensive. We should create a component able to lazy
+    // load more items on scroll.
+    const displayedMatches = this.matches.slice(0, 100)
+
+    console.time('generate-elements')
+    this.itemList = new ItemList(displayedMatches)
+    console.timeEnd('generate-elements')
+    console.time('show-elements')
+    this.scrollWindow.add(this.itemList)
+    this.scrollWindow.showAll()
+    console.timeEnd('show-elements')
+  }
+
   accept = () => {
     this.result = this.itemList?.getSelectedItem()
     this.hide()
+  }
+
+  clear = () => {
+    this.clearList()
+  }
+
+  clearList = () => {
+    const children = this.scrollWindow.getChildren()
+    children.forEach(c => this.scrollWindow.remove(c))
   }
 
   onShow = () => {

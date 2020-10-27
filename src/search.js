@@ -4,19 +4,29 @@
 
 const path = require('path')
 const { Worker } = require('worker_threads')
-const search = require('./search-implementation')
+const searchImplementation = require('./search-implementation')
 
-module.exports = run
+module.exports = { search, asMatches, asItems }
 
 let worker = undefined
 
-function run(query, items) {
+function asItems(matches) {
+  return matches.map(m => m.item)
+}
+
+function asMatches(items) {
+  return items.map(item =>
+    ({ item, score: 0, positions: [] }))
+}
+
+function search(query, items) {
   if (query === '')
-    return Promise.resolve(items.map(item =>
-      ({ item, score: 0, positions: [] })))
+    return Promise.resolve(asMatches(items))
 
   if (items.length < 1000)
-    return Promise.resolve(search(query, items))
+    return Promise.resolve(searchImplementation(query, items))
+
+  console.log('search:worker', [items.length])
 
   return new Promise((resolve, reject) => {
     if (worker !== undefined)

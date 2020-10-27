@@ -11,6 +11,7 @@ const net = require('net')
 const { program } = require('commander')
 
 program
+  .option('-c, --cwd        <dir>', 'current directory')
   .option('-p, --position   <spec>', 'position')
   .option('-i, --input      <file>', 'input file')
   .option('    --fg         <fg>', 'foreground color')
@@ -22,13 +23,9 @@ const dimensions = getDimensions()
 
 const client = new net.Socket()
 client.connect(8556, '127.0.0.1', () => {
-  /* fs.createReadStream(program.input)
-   *   .pipe(client) */
 
-  // const buffer = fs.readFileSync(program.input)
-  const buffer = JSON.stringify(execSync('fd -t f').toString().split('\n'))
   const meta = {
-    length: buffer.length,
+    cwd: program.cwd || process.cwd(),
     dimensions,
     colors: {
       fg: program.fg,
@@ -36,7 +33,6 @@ client.connect(8556, '127.0.0.1', () => {
     },
   }
   client.write(`${JSON.stringify(meta)}\n`)
-  client.write(buffer)
 })
 
 client.on('data', (data) => {

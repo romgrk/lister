@@ -35,18 +35,12 @@ async function main() {
     socket.on('data', buffer => {
       const text = buffer.toString()
 
-      if (meta === undefined) {
-        const index = text.indexOf('\n')
-        meta = JSON.parse(text.slice(0, index))
-        data += text.slice(index + 1)
-        console.log('parsed: ', meta)
-      }
-      else {
-        data += text
-      }
+      data += text
 
-      if (data.length >= meta.length) {
+      const index = data.indexOf('\n')
+      if (index > 0) {
         console.log('running', data.length)
+        meta = JSON.parse(data.slice(0, index))
         run()
       }
     })
@@ -60,8 +54,7 @@ async function main() {
     })
 
     function run() {
-      const items = linesToItems(JSON.parse(data))
-      const item = app.window.run(items, meta)
+      const item = app.window.run(meta)
       const response = { ok: Boolean(item), item: item || null }
       if (!socket.destroyed)
         socket.write(JSON.stringify(response))
