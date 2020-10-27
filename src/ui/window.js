@@ -7,6 +7,7 @@ const util = require('util')
 const exec = util.promisify(cp.exec)
 const gi = require('node-gtk')
 const isEqual = require('lodash.isequal')
+const debounce = require('debounce')
 const activateWindow = require('../helpers/activate-window')
 
 require('./init')
@@ -44,6 +45,8 @@ class ListerWindow extends Gtk.ApplicationWindow {
       type: Gtk.WindowType.TOPLEVEL,
     })
 
+    this.update = debounce(this.update, 1)
+
     /* State */
     this.items = []
     this.matches = []
@@ -51,7 +54,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
 
     /* Elements */
     this.container = new Gtk.Box({ orientation: Gtk.Orientation.VERTICAL })
-    this.input = new Gtk.SearchEntry()
+    this.input = new Gtk.Entry()
     this.scrollWindow = new Gtk.ScrolledWindow()
     this.itemList = null
 
@@ -74,7 +77,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
     // this.on('focus-out-event', this.onFocusOut)
     // this.on('destroy', this.onDestroy)
     this.input.on('key-press-event', this.onKeyPressEvent)
-    this.input.on('search-changed', this.update)
+    // this.input.on('search-changed', this.update)
   }
 
   run = (meta) => {
@@ -110,6 +113,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
   }
 
   update = () => {
+    console.timeEnd('window:update')
     const query = this.input.getText()
 
     if (query === '') {
@@ -142,6 +146,30 @@ class ListerWindow extends Gtk.ApplicationWindow {
     })
   }
 
+  setTheme(colors) {
+    if (!colors || !colors.fg || !colors.bg) {
+      return
+    }
+    if (this.colors && !isEqual(colors, this.colors)) {
+      Gtk.StyleContext.removeProviderForScreen(screen, this.provider)
+    }
+    this.provider = new Gtk.CssProvider()
+    this.provider.loadFromData(`
+      @define-color fg_color ${colors.fg};
+      @define-color bg_color ${colors.bg};
+
+      window, entry.search, viewport, list, row {
+        background-color: @bg_color;
+      }
+    `)
+    Gtk.StyleContext.addProviderForScreen(
+      screen,
+      this.provider,
+      GtkStyleProviderPriority.APPLICATION
+    )
+    this.colors = colors
+  }
+
   renderList = () => {
     this.clearList()
 
@@ -149,7 +177,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
     // items. On large lists, generating that much elements
     // is expensive. We should create a component able to lazy
     // load more items on scroll.
-    const displayedMatches = this.matches.slice(0, 100)
+    const displayedMatches = this.matches.slice(0, 30)
 
     console.time('generate-elements')
     this.itemList = new ItemList(displayedMatches)
@@ -196,34 +224,15 @@ class ListerWindow extends Gtk.ApplicationWindow {
   // onFocusOut = () => { this.close() }
 
   onKeyPressEvent = (event) => {
+    console.log('window:key')
+    console.time('window:update')
     if (event.keyval === Gdk.KEY_Escape)
       this.close()
     else if (event.keyval === Gdk.KEY_Return)
       this.accept()
-  }
-
-  setTheme(colors) {
-    if (!colors || !colors.fg || !colors.bg) {
-      return
+    else {
+      this.update()
     }
-    if (this.colors && !isEqual(colors, this.colors)) {
-      Gtk.StyleContext.removeProviderForScreen(screen, this.provider)
-    }
-    this.provider = new Gtk.CssProvider()
-    this.provider.loadFromData(`
-      @define-color fg_color ${colors.fg};
-      @define-color bg_color ${colors.bg};
-
-      window, entry.search, viewport, list, row {
-        background-color: @bg_color;
-      }
-    `)
-    Gtk.StyleContext.addProviderForScreen(
-      screen,
-      this.provider,
-      GtkStyleProviderPriority.APPLICATION
-    )
-    this.colors = colors
   }
 }
 

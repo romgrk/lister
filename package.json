@@ -11,6 +11,7 @@
   "license": "ISC",
   "dependencies": {
     "commander": "^6.2.0",
+    "debounce": "^1.2.0",
     "lodash.isequal": "^4.5.0",
     "node-gtk": "^0.4.0",
     "xml-escape": "^1.1.0"

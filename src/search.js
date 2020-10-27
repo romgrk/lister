@@ -23,7 +23,7 @@ function search(query, items) {
   if (query === '')
     return Promise.resolve(asMatches(items))
 
-  if (items.length < 1000)
+  if (items.length < 10000)
     return Promise.resolve(searchImplementation(query, items))
 
   console.log('search:worker', [items.length])
