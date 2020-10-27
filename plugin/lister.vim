@@ -26,12 +26,12 @@ endfunc
 
 function! s:lister()
   let hl = nvim_get_hl_by_name('Normal', 1)
-  let fg = '#' . printf("%x", hl.foreground)
-  let bg = '#' . printf("%x", hl.background)
+  let fg = '#' . printf("%x", get(hl, 'foreground', 0x303030))
+  let bg = '#' . printf("%x", get(hl, 'background', 0xefefef))
   let cmd =  s:executable . " --input data/files.json "
     \ . " --fg '" . fg . "'"
     \ . " --bg '" . bg . "'"
-  echom cmd
+  " echom cmd
   let s:job = s:run(cmd, getcwd(), function('s:lister_sink'))
   call s:shadow_open()
 endfunc
