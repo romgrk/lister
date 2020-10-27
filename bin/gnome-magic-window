@@ -53,7 +53,12 @@ function set_active_window() {
   gnome_looking_glass "
     const Main = imports.ui.main;
     const window = global.get_window_actors()
-                   .filter(w => w.toString() === $id)[0];
+                  .filter(w => { 
+                    const wmclass = w.get_meta_window().get_wm_class()
+                    if (wmclass && wmclass === $id)
+                      return true;
+                    return w.toString() === $id;
+                  })[0];
     if (window) {
       Main.activateWindow(window.get_meta_window());
     }
@@ -106,7 +111,11 @@ else
   elif [ "$current" != "$magic" ]; then
     set_active_window "$magic" || true
     echo "$current" >"$COOKIE"
-  elif [ -n "$last_not_magic" ]; then
-    set_active_window "$last_not_magic"
+  else
+    set_active_window "\"$WINDOW\"" || true
+  # elif [ -n "$last_not_magic" ]; then
+    # echo "last_not_magic $last_not_magic"
+    # out=$(set_active_window "$last_not_magic")
+    # fail $out
   fi
 fi
