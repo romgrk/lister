@@ -130,7 +130,7 @@ function! s:shadow_open()
    call setwinvar(s:shadow_winid, '&winblend', 100)
    call timer_start(50, {->
     \ setwinvar(s:shadow_winid, '&winblend',
-    \   getwinvar(s:shadow_winid, '&winblend') - 5)}, { 'repeat': 10 })
+    \   getwinvar(s:shadow_winid, '&winblend') - 5)}, { 'repeat': 5 })
 endfunc
 function! s:shadow_close()
    if s:shadow_winid != v:null && nvim_win_is_valid(s:shadow_winid)
@@ -140,3 +140,5 @@ function! s:shadow_close()
 endfunc
 
 call s:setup()
+let lister.server_start = function('s:server_start')
+let lister.server_stop = function('s:server_stop')
