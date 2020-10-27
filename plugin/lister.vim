@@ -47,7 +47,7 @@ function! s:lister_sink(opts) dict
   end
   try
     let output = json_decode(stdout)
-    echom output
+    " echom output
     if output.ok
       execute 'edit' output.item.text
     end
@@ -77,7 +77,7 @@ function! s:server_stop()
   end
 endfunc
 function! s:server_stopped(job)
-  if !a:job.stopped
+  if !a:job.stopped && v:exiting == v:null
     let stderr = join(a:job.stderr, '')
     let stdout = join(a:job.stdout, '')
     echohl ErrorMsg
