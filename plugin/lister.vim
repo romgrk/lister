@@ -1,6 +1,9 @@
 " !::exe [So]
 
-nnoremap <C-b> :call <SID>lister()<CR>
+command! Lister      call <SID>lister()
+command! ListerStart call <SID>server_start()
+command! ListerStop  call <SID>server_stop()
+
 
 let s:dirname = expand('<sfile>:p:h:h')
 let s:executable = s:dirname . "/bin/lister"
