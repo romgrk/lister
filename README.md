@@ -21,8 +21,9 @@ but I will remove dependencies as I find solutions.
  - xwininfo
  - xprop
  - fd
- - C & C++ compiler
- - Gtk+-3.0 library
+ - C & C++ compiler (for [node-fzy](https://github.com/romgrk/node-fzy))
+ - gtk3, cairo, gobject-introspection (for [node-gtk](https://github.com/romgrk/node-gtk#installing-and-building) that
+     creates the interface)
 
 ### Install (for neovim)
 
