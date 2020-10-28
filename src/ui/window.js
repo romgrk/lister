@@ -30,6 +30,19 @@ const ItemList = require('./item-list')
 const display = Gdk.Display.getDefault()
 const screen = display.getDefaultScreen()
 
+const cssForTheme = colors => `
+  @define-color fg_color ${colors.fg};
+  @define-color bg_color ${colors.bg};
+
+  window, entry, viewport, list, row {
+    background-color: @bg_color;
+  }
+
+  entry {
+    margin-left: 2em;
+  }
+`
+
 
 const width  = 800
 const height = 400
@@ -86,6 +99,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
     this.items = []
     this.matches = []
     this.result = null
+    this.meta = meta
     this.setTheme(colors)
     this.move(
       dimensions.x + (dimensions.width  - width)  / 2,
@@ -97,7 +111,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
     exec('fd -t f', { cwd: meta.cwd }).then(res => {
       console.log('window:exec:done')
       console.timeEnd('exec')
-      const items = res.stdout.split('\n').map(f => ({ text: f }))
+      const items = res.stdout.trim().split('\n').map(f => ({ text: f }))
       console.log('window:items', [items.length])
       this.addItems(items)
     })
@@ -154,14 +168,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
       Gtk.StyleContext.removeProviderForScreen(screen, this.provider)
     }
     this.provider = new Gtk.CssProvider()
-    this.provider.loadFromData(`
-      @define-color fg_color ${colors.fg};
-      @define-color bg_color ${colors.bg};
-
-      window, entry.search, viewport, list, row {
-        background-color: @bg_color;
-      }
-    `)
+    this.provider.loadFromData(cssForTheme(colors))
     Gtk.StyleContext.addProviderForScreen(
       screen,
       this.provider,
@@ -180,7 +187,7 @@ class ListerWindow extends Gtk.ApplicationWindow {
     const displayedMatches = this.matches.slice(0, 30)
 
     console.time('generate-elements')
-    this.itemList = new ItemList(displayedMatches)
+    this.itemList = new ItemList(displayedMatches, this.meta?.colors)
     console.timeEnd('generate-elements')
     console.time('show-elements')
     this.scrollWindow.add(this.itemList)
